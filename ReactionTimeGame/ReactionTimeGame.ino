@@ -8,16 +8,20 @@ const int empty_pin = A4;
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 void setup() {
+  int seed;
+
   lcd.begin(16, 2);
   pinMode(red_led, OUTPUT);
   pinMode(green_led, OUTPUT);
   pinMode(button, INPUT);
-  int seed = analogRead(empty_pin);
+  seed = analogRead(empty_pin);
   randomSeed(seed);
 }
 
 void push(int pin) {
+  // wait until button was pushed down...
   while (digitalRead(pin) == LOW);
+  // ... and released again
   while (digitalRead(pin) == HIGH);
 }
 
@@ -33,58 +37,37 @@ struct result {
 
 struct result *first = NULL;
 
-void loop() {
-  for (int i = 0; i < 3; i++) {
-    digitalWrite(red_led, HIGH);
-    digitalWrite(green_led, HIGH);
-    delay(150);
-    digitalWrite(red_led, LOW);
-    digitalWrite(green_led, LOW);
-    delay(150);
-  }
-  lcd.clear();
-  lcd.print("Reaction Test");
-  delay(500);
-  lcd.setCursor(0, 1);
-  lcd.print("Push Button");
-  push(button);
-  digitalWrite(red_led, HIGH);
-  int wait = randomInt(1000, 2000);
-  delay(wait);
-  digitalWrite(red_led, LOW);
-  digitalWrite(green_led, HIGH);
-  unsigned long start = millis();
-  push(button);
-  unsigned long done = millis();
-  short reaction_time = done - start;
-  lcd.clear();
-  lcd.print("Reaction Time:");
-  lcd.setCursor(0, 1);
-  lcd.print(reaction_time);
-  lcd.print(" ms.");
+byte rank_result(int reaction_time) {
+  struct result *new_result, *tmp, *last;
+  byte rank;
+  bool attached;
 
-  struct result *new_result = (result*)malloc(sizeof(struct result));
+  new_result = (result*)malloc(sizeof(struct result));
   if (new_result == NULL) {
-    lcd.print("memory full");
     exit(1);
   }
   new_result->reaction_time = reaction_time;
   new_result->prev = NULL;
   new_result->next = NULL;
-  byte rank = 1;
+
+  rank = 1;
+  attached = false;
   if (first == NULL) {
+    // nothing there yet
     first = new_result;
   } else {
-    struct result *tmp = first;
-    struct result *last = NULL;
+    tmp = first;
+    last = NULL;
     do {
       if (new_result->reaction_time < tmp->reaction_time) {
+        // attach new result in front of next slower entry
         new_result->next = tmp;
         new_result->prev = tmp->prev;
         if (tmp->prev != NULL) {
           tmp->prev->next = new_result;
         }
         tmp->prev = new_result;
+        attached = true;
         break;
       } else {
         rank++;
@@ -93,13 +76,61 @@ void loop() {
       }
     } while (tmp != NULL);
     if (tmp == first) {
+      // new_result was inserted before tmp, would be NULL otherwise
       first = new_result;
-    } else if (tmp == NULL) {
+    } else if (!attached) {
+      // no entry found to add new one in front of it, attach at the end
       last->next = new_result;
       new_result->prev = last;
     }
   }
+  return rank;
+}
+
+void loop() {
+  unsigned int i, wait;
+  unsigned long start, done;
+  unsigned short reaction_time;
+  byte rank;
+
+  // optical start signal
+  for (i = 0; i < 3; i++) {
+    digitalWrite(red_led, HIGH);
+    digitalWrite(green_led, HIGH);
+    delay(150);
+    digitalWrite(red_led, LOW);
+    digitalWrite(green_led, LOW);
+    delay(150);
+  }
+  lcd.clear();
+
+  // make user initialize the game
+  lcd.print("Reaction Test");
+  delay(500);
+  lcd.setCursor(0, 1);
+  lcd.print("Push Button");
+  push(button);
+
+  // the actual game
+  digitalWrite(red_led, HIGH);
+  wait = randomInt(1000, 2000);
+  delay(wait);
+  digitalWrite(red_led, LOW);
+  digitalWrite(green_led, HIGH);
+  start = millis();
+  push(button);
+  done = millis();
+  reaction_time = done - start;
+  lcd.clear();
+
+  // output result
+  lcd.print("Reaction Time:");
+  lcd.setCursor(0, 1);
+  lcd.print(reaction_time);
+  lcd.print(" ms.");
+  rank = rank_result(reaction_time);
   lcd.print(" #");
   lcd.print(rank);
+
   delay(1000);
 }
