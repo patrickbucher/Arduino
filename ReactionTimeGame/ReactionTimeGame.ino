@@ -76,6 +76,7 @@ void loop() {
     first = new_result;
   } else {
     struct result *tmp = first;
+    struct result *last = NULL;
     do {
       if (new_result->reaction_time < tmp->reaction_time) {
         new_result->next = tmp;
@@ -87,11 +88,15 @@ void loop() {
         break;
       } else {
         rank++;
+        last = tmp;
         tmp = tmp->next;
       }
     } while (tmp != NULL);
     if (tmp == first) {
       first = new_result;
+    } else if (tmp == NULL) {
+      last->next = new_result;
+      new_result->prev = last;
     }
   }
   lcd.print(" #");
