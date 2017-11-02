@@ -75,7 +75,7 @@ byte rank_result(int reaction_time) {
         tmp = tmp->next;
       }
     } while (tmp != NULL);
-    if (tmp == first) {
+    if (tmp == first && tmp != NULL && first != NULL) {
       // new_result was inserted before tmp, would be NULL otherwise
       first = new_result;
     } else if (!attached) {
