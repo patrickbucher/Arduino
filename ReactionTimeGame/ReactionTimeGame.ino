@@ -31,7 +31,6 @@ int randomInt(int min, int max) {
 
 struct result {
   short reaction_time;
-  struct result *prev;
   struct result *next;
 };
 
@@ -47,7 +46,6 @@ byte rank_result(int reaction_time) {
     exit(1);
   }
   new_result->reaction_time = reaction_time;
-  new_result->prev = NULL;
   new_result->next = NULL;
 
   rank = 1;
@@ -62,11 +60,9 @@ byte rank_result(int reaction_time) {
       if (new_result->reaction_time < tmp->reaction_time) {
         // attach new result in front of next slower entry
         new_result->next = tmp;
-        new_result->prev = tmp->prev;
-        if (tmp->prev != NULL) {
-          tmp->prev->next = new_result;
+        if (last != NULL) {
+          last->next = new_result;
         }
-        tmp->prev = new_result;
         attached = true;
         break;
       } else {
@@ -81,7 +77,6 @@ byte rank_result(int reaction_time) {
     } else if (!attached) {
       // no entry found to add new one in front of it, attach at the end
       last->next = new_result;
-      new_result->prev = last;
     }
   }
   return rank;
