@@ -109,7 +109,7 @@ void loop() {
   // the actual game
   digitalWrite(red_led, HIGH);
   wait = randomInt(1000, 2000);
-  delay(wait);
+  delay(wait); // TODO: implement non-blocking wait to detect false starts
   digitalWrite(red_led, LOW);
   digitalWrite(green_led, HIGH);
   start = millis();
