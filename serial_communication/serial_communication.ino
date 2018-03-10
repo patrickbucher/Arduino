@@ -1,5 +1,6 @@
 #define MSG_LEN 1024
 
+const int led_blue = 10;
 const int led_red = 11;
 const int led_yellow = 12;
 const int led_green = 13;
@@ -9,10 +10,11 @@ char message[MSG_LEN];
 int n;
 
 void setup() {
+  pinMode(led_blue, OUTPUT);
   pinMode(led_red, OUTPUT);
   pinMode(led_yellow, OUTPUT);
   pinMode(led_green, OUTPUT);
-  
+
   Serial.begin(9600);
 
   n = 0;
@@ -48,6 +50,10 @@ void handle(char *command, int n) {
     digitalWrite(led_green, HIGH);
   }  else if (strncmp("green_off", command, n) == 0) {
     digitalWrite(led_green, LOW);
+  } else if (strncmp("blue_on", command, n) == 0) {
+    digitalWrite(led_blue, HIGH);
+  }  else if (strncmp("blue_off", command, n) == 0) {
+    digitalWrite(led_blue, LOW);
   } else {
     Serial.print("unknown command: ");
     Serial.println(command);
